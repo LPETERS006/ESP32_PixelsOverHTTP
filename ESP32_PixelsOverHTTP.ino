@@ -1,21 +1,26 @@
+#include <SPI.h>
 #include <WiFi.h>
 #include <ArduinoHttpClient.h>
 #include <FastLED.h>
+#include <LinkedList.h>
 
 #define NUM_LEDS 1170
-#define DATA_PIN 22
+#define DATA_PIN 23
 CRGB leds[NUM_LEDS];
 
-const char* ssid     = "SSID";
-const char* password = "PASSWORD";
-const char* kHostname = "HOSTNAME";
+const char* ssid     = "LS006";
+const char* password = "i2a781r4o3u5yd869n";
+const char* kHostname = "192.168.132.119";
 int port = 3001;
 const char* kPath = "/users/";
 const int kNetworkTimeout = 30 * 1000;
 const int kNetworkDelay = 1000;
-
+int* ledsNew;
 WiFiClient c;
 HttpClient http(c, kHostname, port);
+
+LinkedList<CRGB> myLinkedList = LinkedList<CRGB>();
+LinkedList<int> myLinkedListIndex = LinkedList<int>();
 
 String getValue(String data, char separator, int index)
 {
@@ -36,12 +41,22 @@ String getValue(String data, char separator, int index)
 
 void res2LED(String dat)
 {
+  myLinkedList.clear();
+  myLinkedListIndex.clear();
   for (int i = 0; i < NUM_LEDS; i++)
   {
     String LED = getValue(dat, ',' , i);
     Serial.println(LED);
-    leds[i] = CRGB( LED.substring(1, 4).toInt(), LED.substring(4, 7).toInt(), LED.substring(7, 10).toInt());
+    if (leds[i] == CRGB( LED.substring(1, 4).toInt(), LED.substring(4, 7).toInt(), LED.substring(7, 10).toInt())) {
 
+      leds[i] = CRGB( LED.substring(1, 4).toInt(), LED.substring(4, 7).toInt(), LED.substring(7, 10).toInt());
+    }
+    else {
+      Serial.println(".");
+      leds[i] = CRGB( LED.substring(1, 4).toInt(), LED.substring(4, 7).toInt(), LED.substring(7, 10).toInt());
+      myLinkedList.add(CRGB( LED.substring(1, 4).toInt(), LED.substring(4, 7).toInt(), LED.substring(7, 10).toInt()));
+      myLinkedListIndex.add(i);
+    }
   }
   FastLED.show();
 }
@@ -63,10 +78,10 @@ void setup()
   Serial.println("WiFi connected");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
-  LEDS.addLeds<WS2812, DATA_PIN, RGB>(leds, NUM_LEDS);
+  LEDS.addLeds<WS2812, DATA_PIN, GRB>(leds, NUM_LEDS);
   LEDS.clear();
   LEDS.show();
-  LEDS.setBrightness(70);
+  // LEDS.setBrightness(10);
 }
 
 void getHttp()
@@ -115,11 +130,34 @@ void getHttp()
   http.stop();
 }
 
-int count = 0;
+boolean blink() {
+  Serial.println("blink");
+  Serial.println( "index size" + String(myLinkedListIndex.size()));
+  for (int i = 0; i < myLinkedList.size(); i++)
+  {
+    int l = myLinkedListIndex.get(i);
+    Serial.println( "null" + String(i));
+    leds[l] = CRGB(0, 0, 0);
+  }
 
+  LEDS.show();
+  delay(300);
+  for (int i = 0; i < myLinkedListIndex.size(); i++) {
+    Serial.println("asasa" +  String(i));
+    leds[myLinkedListIndex.get(i)]  = myLinkedList.get(i);
+  }
+  LEDS.show();
+  delay(300);
+}
+
+int count = 0;
+boolean blinkMarker = false;
 void loop()
 {
   getHttp();
   count++;
-  delay(10000);
+  for (int i = 0; i < 60; i++ ) {
+    blink();
+    delay(100);
+  }
 }
