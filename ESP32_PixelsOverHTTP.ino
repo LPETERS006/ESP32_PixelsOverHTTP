@@ -19,7 +19,8 @@ int* ledsNew;
 WiFiClient c;
 HttpClient http(c, kHostname, port);
 
-LinkedList<CRGB> myLinkedList = LinkedList<CRGB>();
+LinkedList<CRGB> myLinkedListNew = LinkedList<CRGB>();
+LinkedList<CRGB> myLinkedListOld = LinkedList<CRGB>();
 LinkedList<int> myLinkedListIndex = LinkedList<int>();
 
 String getValue(String data, char separator, int index)
@@ -41,21 +42,20 @@ String getValue(String data, char separator, int index)
 
 void res2LED(String dat)
 {
-  myLinkedList.clear();
+  myLinkedListNew.clear();
+  myLinkedListOld.clear();
   myLinkedListIndex.clear();
   for (int i = 0; i < NUM_LEDS; i++)
   {
     String LED = getValue(dat, ',' , i);
     Serial.println(LED);
-    if (leds[i] == CRGB( LED.substring(1, 4).toInt(), LED.substring(4, 7).toInt(), LED.substring(7, 10).toInt())) {
-
-      leds[i] = CRGB( LED.substring(1, 4).toInt(), LED.substring(4, 7).toInt(), LED.substring(7, 10).toInt());
-    }
+    if (leds[i] == CRGB( LED.substring(1, 4).toInt(), LED.substring(4, 7).toInt(), LED.substring(7, 10).toInt())) {}
     else {
       Serial.println(".");
-      leds[i] = CRGB( LED.substring(1, 4).toInt(), LED.substring(4, 7).toInt(), LED.substring(7, 10).toInt());
-      myLinkedList.add(CRGB( LED.substring(1, 4).toInt(), LED.substring(4, 7).toInt(), LED.substring(7, 10).toInt()));
       myLinkedListIndex.add(i);
+      myLinkedListOld.add(leds[i]);
+      myLinkedListNew.add(CRGB( LED.substring(1, 4).toInt(), LED.substring(4, 7).toInt(), LED.substring(7, 10).toInt()));
+      leds[i] = CRGB( LED.substring(1, 4).toInt(), LED.substring(4, 7).toInt(), LED.substring(7, 10).toInt());
     }
   }
   FastLED.show();
@@ -133,21 +133,22 @@ void getHttp()
 boolean blink() {
   Serial.println("blink");
   Serial.println( "index size" + String(myLinkedListIndex.size()));
-  for (int i = 0; i < myLinkedList.size(); i++)
+  for (int i = 0; i < myLinkedListIndex.size(); i++)
   {
     int l = myLinkedListIndex.get(i);
-    Serial.println( "null" + String(i));
-    leds[l] = CRGB(0, 0, 0);
+    Serial.println(String(i));
+    leds[l]  = myLinkedListOld.get(i);
   }
 
   LEDS.show();
   delay(300);
   for (int i = 0; i < myLinkedListIndex.size(); i++) {
-    Serial.println("asasa" +  String(i));
-    leds[myLinkedListIndex.get(i)]  = myLinkedList.get(i);
+    int l = myLinkedListIndex.get(i);
+    Serial.println(String(i));
+    leds[l]  = myLinkedListNew.get(i);
   }
   LEDS.show();
-  delay(300);
+  delay(1000);
 }
 
 int count = 0;
@@ -158,6 +159,5 @@ void loop()
   count++;
   for (int i = 0; i < 60; i++ ) {
     blink();
-    delay(100);
-  }
+  };
 }
