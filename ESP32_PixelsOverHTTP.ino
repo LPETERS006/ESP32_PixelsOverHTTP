@@ -1,3 +1,5 @@
+#define ESP32
+
 #include <SPI.h>
 #include <WiFi.h>
 #include <ArduinoHttpClient.h>
@@ -16,13 +18,16 @@ const char* kPath = "/users/";
 const int kNetworkTimeout = 30 * 1000;
 const int kNetworkDelay = 1000;
 int* ledsNew;
+
 WiFiClient c;
 HttpClient http(c, kHostname, port);
-
 LinkedList<CRGB> myLinkedListNew = LinkedList<CRGB>();
 LinkedList<CRGB> myLinkedListOld = LinkedList<CRGB>();
 LinkedList<int> myLinkedListIndex = LinkedList<int>();
 
+/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++ splitting by ...
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 String getValue(String data, char separator, int index)
 {
   int found = 0;
@@ -40,6 +45,9 @@ String getValue(String data, char separator, int index)
   return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
 }
 
+/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++ stringToLed ....
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 void res2LED(String dat)
 {
   myLinkedListNew.clear();
@@ -61,6 +69,9 @@ void res2LED(String dat)
   FastLED.show();
 }
 
+/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++ setup...
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 void setup()
 {
   Serial.begin(115200);
@@ -81,9 +92,12 @@ void setup()
   LEDS.addLeds<WS2812, DATA_PIN, GRB>(leds, NUM_LEDS);
   LEDS.clear();
   LEDS.show();
-  // LEDS.setBrightness(10);
+  LEDS.setBrightness(10);
 }
 
+/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++ http GET json...
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 void getHttp()
 {
   int err = 0;
@@ -130,6 +144,9 @@ void getHttp()
   http.stop();
 }
 
+/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++ blink updated LEDs.....
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 boolean blink() {
   Serial.println("blink");
   Serial.println( "index size" + String(myLinkedListIndex.size()));
@@ -153,6 +170,10 @@ boolean blink() {
 
 int count = 0;
 boolean blinkMarker = false;
+
+/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++ .....
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 void loop()
 {
   getHttp();
