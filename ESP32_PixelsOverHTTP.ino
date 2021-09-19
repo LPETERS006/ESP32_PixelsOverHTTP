@@ -11,7 +11,7 @@
 CRGB leds[NUM_LEDS];
 
 const char* ssid     = "LS006";
-const char* password = "i2a781r4o3u5yd869n";
+const char* password = "XXX";
 const char* kHostname = "192.168.132.119";
 int port = 3001;
 const char* kPath = "/users/";
@@ -26,8 +26,8 @@ LinkedList<CRGB> myLinkedListOld = LinkedList<CRGB>();
 LinkedList<int> myLinkedListIndex = LinkedList<int>();
 
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-++ splitting by ...
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+  ++ splitting by ...
+  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 String getValue(String data, char separator, int index)
 {
   int found = 0;
@@ -46,9 +46,9 @@ String getValue(String data, char separator, int index)
 }
 
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-++ stringToLed ....
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-void res2LED(String dat)
+  ++ stringToLed ....
+  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+void response2LED(String dat)
 {
   myLinkedListNew.clear();
   myLinkedListOld.clear();
@@ -70,8 +70,8 @@ void res2LED(String dat)
 }
 
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-++ setup...
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+  ++ setup...
+  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 void setup()
 {
   Serial.begin(115200);
@@ -96,8 +96,8 @@ void setup()
 }
 
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-++ http GET json...
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+  ++ http GET json...
+  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 void getHttp()
 {
   int err = 0;
@@ -114,14 +114,13 @@ void getHttp()
       Serial.print("Content length is: ");
       Serial.println(bodyLen);
       unsigned long timeoutStart = millis();
-      char c;
       while ( (http.connected() || http.available()) && (!http.endOfBodyReached()) && ((millis() - timeoutStart) < kNetworkTimeout) )
       {
         if (http.available())
         {
           String response = http.responseBody();
           String data = response.substring(29, response.length() - 2);
-          res2LED(data);
+          response2LED(data);
           timeoutStart = millis();
         }
         else
@@ -145,9 +144,9 @@ void getHttp()
 }
 
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-++ blink updated LEDs.....
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-boolean blink() {
+  ++ blink updated LEDs.....
+  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+void blink() {
   Serial.println("blink");
   Serial.println( "index size" + String(myLinkedListIndex.size()));
   for (int i = 0; i < myLinkedListIndex.size(); i++)
@@ -158,27 +157,32 @@ boolean blink() {
   }
 
   LEDS.show();
-  delay(300);
+  delay(100);
   for (int i = 0; i < myLinkedListIndex.size(); i++) {
     int l = myLinkedListIndex.get(i);
     Serial.println(String(i));
     leds[l]  = myLinkedListNew.get(i);
   }
   LEDS.show();
-  delay(1000);
+  delay(500);
 }
 
 int count = 0;
-boolean blinkMarker = false;
 
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-++ .....
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+  ++ .....
+  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 void loop()
 {
   getHttp();
-  count++;
-  for (int i = 0; i < 60; i++ ) {
+  for (int i = 0; i < 10; i++ ) {
     blink();
+    blink();
+    blink();
+    delay(500);
   };
+  count++;
+  if (count <= 10) {
+    count = 0;
+  }
 }
