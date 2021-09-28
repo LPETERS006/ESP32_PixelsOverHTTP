@@ -10,9 +10,9 @@
 #define DATA_PIN 23
 CRGB leds[NUM_LEDS];
 
-const char* ssid     = "LS006";
+const char* ssid     = "XXX";
 const char* password = "XXX";
-const char* kHostname = "192.168.132.119";
+const char* kHostname = "XXX";
 int port = 3001;
 const char* kPath = "/users/";
 const int kNetworkTimeout = 30 * 1000;
@@ -24,6 +24,16 @@ HttpClient http(c, kHostname, port);
 LinkedList<CRGB> myLinkedListNew = LinkedList<CRGB>();
 LinkedList<CRGB> myLinkedListOld = LinkedList<CRGB>();
 LinkedList<int> myLinkedListIndex = LinkedList<int>();
+
+void initWiFi() {
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(500);  Serial.print(".");
+  }
+  Serial.println(WiFi.localIP());
+}
 
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   ++ splitting by ...
@@ -78,17 +88,7 @@ void setup()
   delay(10);
   Serial.println();
   Serial.println();
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(500);  Serial.print(".");
-  }
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
+  initWiFi();
   LEDS.addLeds<WS2812, DATA_PIN, GRB>(leds, NUM_LEDS);
   LEDS.clear();
   LEDS.show();
@@ -119,7 +119,9 @@ void getHttp()
         if (http.available())
         {
           String response = http.responseBody();
-          String data = response.substring(29, response.length() - 2);
+          int offset = response.lastIndexOf('data');
+          String data = response.substring(offset + 4, response.length() - 2);
+          /*          String data = response.substring(29, response.length() - 2);    */
           response2LED(data);
           timeoutStart = millis();
         }
@@ -168,7 +170,8 @@ void blink() {
 }
 
 int count = 0;
-
+unsigned long previousTime = 0;
+unsigned long delayS = 20000;  // 20 seconds delay
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   ++ .....
   ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
@@ -184,5 +187,12 @@ void loop()
   count++;
   if (count <= 10) {
     count = 0;
+  }
+  if ((WiFi.status() != WL_CONNECTED) && ((millis()-previousTime) >= delayS)) {
+    Serial.print(millis());
+    Serial.println("Reconnecting to WIFI network");
+    WiFi.disconnect();
+    WiFi.reconnect();
+    previousTime = millis();
   }
 }
