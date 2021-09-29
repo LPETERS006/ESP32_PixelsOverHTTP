@@ -10,72 +10,72 @@
 #define DATA_PIN 23
 CRGB leds[NUM_LEDS];
 
-const char* ssid     = "XXX";
-const char* password = "XXX";
-const char* kHostname = "XXX";
-int port = 3001;
-const char* kPath = "/users/";
-const int kNetworkTimeout = 30 * 1000;
-const int kNetworkDelay = 1000;
-int* ledsNew;
+const char* kSsid                  = "XXX";
+const char* kPassword              = "XXX";
+const char* kHostname              = "XXX";
+const int kPort                    = 3001;
+const char* kPath                  = "/users/";
+const int kNetworkTimeout          = 30 * 1000;
+const int kNetworkDelay            = 1000;
+unsigned long kPreviousTime        = 0;
+unsigned long kReconnectDelay      = 20000;
+const int kBlinkDelayMultiplicator = 5;
+const int kBlinkRepeats            = 5;
+int kLoopCount                     = 0;
 
-WiFiClient c;
-HttpClient http(c, kHostname, port);
-LinkedList<CRGB> myLinkedListNew = LinkedList<CRGB>();
-LinkedList<CRGB> myLinkedListOld = LinkedList<CRGB>();
-LinkedList<int> myLinkedListIndex = LinkedList<int>();
+WiFiClient kClient;
+HttpClient http(kClient, kHostname, kPort);
+LinkedList<CRGB> kLinkedListNew = LinkedList<CRGB>();
+LinkedList<CRGB> kLinkedListOld = LinkedList<CRGB>();
+LinkedList<int> kLinkedListIndex = LinkedList<int>();
 
-void initWiFi() {
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(500);  Serial.print(".");
-  }
+
+/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  ++ WiFi init ...
+  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+void initWiFi() 
+{
+  WiFi.mode(WIFI_STA); WiFi.begin(kSsid, kPassword);
+  while (WiFi.status() != WL_CONNECTED) { delay(500); Serial.print('.'); }
   Serial.println(WiFi.localIP());
 }
 
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   ++ splitting by ...
   ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-String getValue(String data, char separator, int index)
+String getValues(String vData, char vSeparator, int vIndex)
 {
-  int found = 0;
-  int strIndex[] = { 0, -1 };
-  int maxIndex = data.length() - 1;
-  for (int i = 0; i <= maxIndex && found <= index; i++)
+  int found = 0; int strIndex[] = { 0, -1 };
+  int maxIndex = vData.length() - 1;
+  for (int i = 0; i <= maxIndex && found <= vIndex; i++)
   {
-    if (data.charAt(i) == separator || i == maxIndex)
+    if (vData.charAt(i) == vSeparator || i == maxIndex)
     {
-      found++;
-      strIndex[0] = strIndex[1] + 1;
-      strIndex[1] = (i == maxIndex) ? i + 1 : i;
+      found++; strIndex[0] = strIndex[1] + 1; strIndex[1] = (i == maxIndex) ? i + 1 : i;
     }
-  }
-  return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
+  };
+  return found > vIndex ? vData.substring(strIndex[0], strIndex[1]) : "";
 }
 
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   ++ stringToLed ....
   ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-void response2LED(String dat)
+void response2LED(String rData)
 {
-  myLinkedListNew.clear();
-  myLinkedListOld.clear();
-  myLinkedListIndex.clear();
+  kLinkedListNew.clear(); kLinkedListOld.clear(); kLinkedListIndex.clear();
   for (int i = 0; i < NUM_LEDS; i++)
   {
-    String LED = getValue(dat, ',' , i);
-    Serial.println(LED);
-    if (leds[i] == CRGB( LED.substring(1, 4).toInt(), LED.substring(4, 7).toInt(), LED.substring(7, 10).toInt())) {}
-    else {
-      Serial.println(".");
-      myLinkedListIndex.add(i);
-      myLinkedListOld.add(leds[i]);
-      myLinkedListNew.add(CRGB( LED.substring(1, 4).toInt(), LED.substring(4, 7).toInt(), LED.substring(7, 10).toInt()));
-      leds[i] = CRGB( LED.substring(1, 4).toInt(), LED.substring(4, 7).toInt(), LED.substring(7, 10).toInt());
+    String rLED = getValues(rData, ',' , i);
+	Serial.println(rLED);
+    if (leds[i] == CRGB( rLED.substring(1, 4).toInt(), rLED.substring(4, 7).toInt(), rLED.substring(7, 10).toInt())) {}
+    else 
+	{
+      Serial.println('.');
+      kLinkedListIndex.add(i); kLinkedListOld.add(leds[i]);
+      kLinkedListNew.add(CRGB( rLED.substring(1, 4).toInt(), rLED.substring(4, 7).toInt(), rLED.substring(7, 10).toInt()));
+      leds[i] = CRGB( rLED.substring(1, 4).toInt(), rLED.substring(4, 7).toInt(), rLED.substring(7, 10).toInt());
     }
-  }
+  };
   FastLED.show();
 }
 
@@ -84,19 +84,14 @@ void response2LED(String dat)
   ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 void setup()
 {
-  Serial.begin(115200);
-  delay(10);
-  Serial.println();
-  Serial.println();
+  Serial.begin(115200); delay(10); Serial.println(); Serial.println();
   initWiFi();
   LEDS.addLeds<WS2812, DATA_PIN, GRB>(leds, NUM_LEDS);
-  LEDS.clear();
-  LEDS.show();
-  LEDS.setBrightness(10);
+  LEDS.clear(); LEDS.setBrightness(10); LEDS.show();
 }
 
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  ++ http GET json...
+  ++ http GET DATA...
   ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 void getHttp()
 {
@@ -104,15 +99,13 @@ void getHttp()
   err = http.get(kPath);
   if (err == 0)
   {
-    Serial.println("startedRequest ok");
+    Serial.println('startedRequest ok');
     err = http.responseStatusCode();
     if (err >= 0)
     {
-      Serial.print("Got status code: ");
-      Serial.println(err);
+      Serial.print('Got status code: '); Serial.println(err);
       int bodyLen = http.contentLength();
-      Serial.print("Content length is: ");
-      Serial.println(bodyLen);
+      Serial.print('Content length is: '); Serial.println(bodyLen);
       unsigned long timeoutStart = millis();
       while ( (http.connected() || http.available()) && (!http.endOfBodyReached()) && ((millis() - timeoutStart) < kNetworkTimeout) )
       {
@@ -121,78 +114,52 @@ void getHttp()
           String response = http.responseBody();
           int offset = response.lastIndexOf('data');
           String data = response.substring(offset + 4, response.length() - 2);
-          /*          String data = response.substring(29, response.length() - 2);    */
           response2LED(data);
           timeoutStart = millis();
         }
-        else
-        {
-          delay(kNetworkDelay);
-        }
+        else { delay(kNetworkDelay); }
       }
     }
-    else
-    {
-      Serial.print("Getting response failed: ");
-      Serial.println(err);
-    }
+    else { Serial.print('Getting response failed: '); Serial.println(err); }
   }
-  else
-  {
-    Serial.print("Connect failed: ");
-    Serial.println(err);
-  }
+  else { Serial.print('Connect failed: '); Serial.println(err); }
   http.stop();
 }
 
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   ++ blink updated LEDs.....
   ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-void blink() {
-  Serial.println("blink");
-  Serial.println( "index size" + String(myLinkedListIndex.size()));
-  for (int i = 0; i < myLinkedListIndex.size(); i++)
+void blink() 
+{
+  Serial.println('blink'); Serial.println( 'index size' + String(kLinkedListIndex.size()));
+  for (int i = 0; i < kLinkedListIndex.size(); i++)
   {
-    int l = myLinkedListIndex.get(i);
-    Serial.println(String(i));
-    leds[l]  = myLinkedListOld.get(i);
-  }
-
-  LEDS.show();
-  delay(100);
-  for (int i = 0; i < myLinkedListIndex.size(); i++) {
-    int l = myLinkedListIndex.get(i);
-    Serial.println(String(i));
-    leds[l]  = myLinkedListNew.get(i);
-  }
-  LEDS.show();
-  delay(500);
+    int l = kLinkedListIndex.get(i); Serial.println(String(i)); leds[l] = kLinkedListOld.get(i);
+  };
+  LEDS.show(); delay(100*kBlinkDelayMultiplicator);
+  for (int i = 0; i < kLinkedListIndex.size(); i++) 
+  {
+    int l = kLinkedListIndex.get(i); Serial.println(String(i)); leds[l] = kLinkedListNew.get(i);
+  };
+  LEDS.show(); delay(500*kBlinkDelayMultiplicator);
 }
 
-int count = 0;
-unsigned long previousTime = 0;
-unsigned long delayS = 20000;  // 20 seconds delay
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   ++ .....
   ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 void loop()
 {
   getHttp();
-  for (int i = 0; i < 10; i++ ) {
-    blink();
-    blink();
-    blink();
-    delay(500);
+  for (int i = 0; i < 10; i++ ) 
+  {
+	for (int ii = 0; ii < kBlinkRepeats; ii++ ) { blink(); }
+    delay(500*kBlinkDelayMultiplicator);
   };
-  count++;
-  if (count <= 10) {
-    count = 0;
-  }
-  if ((WiFi.status() != WL_CONNECTED) && ((millis()-previousTime) >= delayS)) {
-    Serial.print(millis());
-    Serial.println("Reconnecting to WIFI network");
-    WiFi.disconnect();
-    WiFi.reconnect();
-    previousTime = millis();
-  }
+  kLoopCount++; if (kLoopCount <= 10) { kLoopCount = 0; }
+  if ((WiFi.status() != WL_CONNECTED) && ((millis()-kPreviousTime) >= kReconnectDelay)) 
+  {
+    Serial.print(millis()); Serial.println('Reconnecting to WIFI network');
+    WiFi.disconnect(); WiFi.reconnect();
+    kPreviousTime = millis();
+  };
 }
