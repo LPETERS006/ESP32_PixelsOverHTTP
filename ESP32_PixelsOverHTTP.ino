@@ -1,4 +1,7 @@
 #define ESP32
+#define FASTLED_ALLOW_INTERRUPTS 1
+#define INTERRUPT_THRESHOLD 1
+//#define FASTLED_INTERRUPT_RETRY_COUNT 0
 
 #include <SPI.h>
 #include <WiFi.h>
@@ -6,15 +9,16 @@
 #include <FastLED.h>
 #include <LinkedList.h>
 
+
 #define NUM_LEDS 1170
 #define DATA_PIN 23
 CRGB leds[NUM_LEDS];
 
-const char* kSsid                  = "XXX";
-const char* kPassword              = "XXX";
-const char* kHostname              = "XXX";
-const int kPort                    = 3001;
-const char* kPath                  = "/users/";
+const char* kSsid                  = "xxx";
+const char* kPassword              = "xxx";
+const char* kHostname              = "www.xxx.com";
+const int kPort                    = 443;
+const char* kPath                  = "/xxx/xxx/xxx/";
 const int kNetworkTimeout          = 30 * 1000;
 const int kNetworkDelay            = 1000;
 unsigned long kPreviousTime        = 0;
@@ -22,6 +26,7 @@ unsigned long kReconnectDelay      = 20000;
 const int kBlinkDelayMultiplicator = 5;
 const int kBlinkRepeats            = 5;
 int kLoopCount                     = 0;
+String kDeviceMac;
 
 WiFiClient kClient;
 HttpClient http(kClient, kHostname, kPort);
@@ -66,10 +71,10 @@ void response2LED(String rData)
   for (int i = 0; i < NUM_LEDS; i++)
   {
     String rLED = getValues(rData, ',' , i);
-	Serial.println(rLED);
+  Serial.println(rLED);
     if (leds[i] == CRGB( rLED.substring(1, 4).toInt(), rLED.substring(4, 7).toInt(), rLED.substring(7, 10).toInt())) {}
     else 
-	{
+  {
       Serial.println('.');
       kLinkedListIndex.add(i); kLinkedListOld.add(leds[i]);
       kLinkedListNew.add(CRGB( rLED.substring(1, 4).toInt(), rLED.substring(4, 7).toInt(), rLED.substring(7, 10).toInt()));
@@ -79,12 +84,20 @@ void response2LED(String rData)
   FastLED.show();
 }
 
+void getDeviceMAC()
+{
+  kDeviceMac = WiFi.macAddress();
+  kDeviceMac.replace(":", "");
+  Serial.println(kDeviceMac);
+}
+
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   ++ setup...
   ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 void setup()
 {
   Serial.begin(115200); delay(10); Serial.println(); Serial.println();
+  getDeviceMAC();
   initWiFi();
   LEDS.addLeds<WS2812, DATA_PIN, GRB>(leds, NUM_LEDS);
   LEDS.clear(); LEDS.setBrightness(10); LEDS.show();
@@ -96,7 +109,10 @@ void setup()
 void getHttp()
 {
   int err = 0;
-  err = http.get(kPath);
+  http.beginRequest();
+  err = http.get(kPath + kDeviceMac + "/");
+  http.sendHeader("Content-Type","application/json;");
+  http.endRequest();
   if (err == 0)
   {
     Serial.println('startedRequest ok');
@@ -152,7 +168,7 @@ void loop()
   getHttp();
   for (int i = 0; i < 10; i++ ) 
   {
-	for (int ii = 0; ii < kBlinkRepeats; ii++ ) { blink(); }
+  for (int ii = 0; ii < kBlinkRepeats; ii++ ) { blink(); }
     delay(500*kBlinkDelayMultiplicator);
   };
   kLoopCount++; if (kLoopCount <= 10) { kLoopCount = 0; }
