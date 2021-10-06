@@ -5,6 +5,7 @@
 
 #include <SPI.h>
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <ArduinoHttpClient.h>
 #include <FastLED.h>
 #include <LinkedList.h>
@@ -28,7 +29,7 @@ const int kBlinkRepeats            = 5;
 int kLoopCount                     = 0;
 String kDeviceMac;
 
-WiFiClient kClient;
+WiFiClientSecure kClient;
 HttpClient http(kClient, kHostname, kPort);
 LinkedList<CRGB> kLinkedListNew = LinkedList<CRGB>();
 LinkedList<CRGB> kLinkedListOld = LinkedList<CRGB>();
@@ -40,6 +41,7 @@ LinkedList<int> kLinkedListIndex = LinkedList<int>();
   ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 void initWiFi() 
 {
+  kClient.setInsecure();
   WiFi.mode(WIFI_STA); WiFi.begin(kSsid, kPassword);
   while (WiFi.status() != WL_CONNECTED) { delay(500); Serial.print('.'); }
   Serial.println(WiFi.localIP());
