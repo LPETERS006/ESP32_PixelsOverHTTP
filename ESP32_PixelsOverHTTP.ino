@@ -34,7 +34,6 @@ LinkedList<CRGB> kLinkedListNew = LinkedList<CRGB>();
 LinkedList<CRGB> kLinkedListOld = LinkedList<CRGB>();
 LinkedList<int> kLinkedListIndex = LinkedList<int>();
 
-
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   ++ WiFi init ...
   ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
@@ -51,16 +50,15 @@ void initWiFi()
   ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 void setClock() {
   configTime(0, 0, "pool.ntp.org", "time.nist.gov");
-
   Serial.print(F("Waiting for NTP time sync: "));
   time_t nowSecs = time(nullptr);
-  while (nowSecs < 8 * 3600 * 2) {
+  while (nowSecs < 8 * 3600 * 2) 
+  {
     delay(500);
     Serial.print(F("."));
     yield();
     nowSecs = time(nullptr);
   }
-
   Serial.println();
   struct tm timeinfo;
   gmtime_r(&nowSecs, &timeinfo);
@@ -94,10 +92,10 @@ void response2LED(String rData)
   for (int i = 0; i < NUM_LEDS; i++)
   {
     String rLED = getValues(rData, ',' , i);
-  Serial.println(rLED);
+    Serial.println(rLED);
     if (leds[i] == CRGB( rLED.substring(1, 4).toInt(), rLED.substring(4, 7).toInt(), rLED.substring(7, 10).toInt())) {}
     else 
-  {
+    {
       Serial.println('.');
       kLinkedListIndex.add(i); kLinkedListOld.add(leds[i]);
       kLinkedListNew.add(CRGB( rLED.substring(1, 4).toInt(), rLED.substring(4, 7).toInt(), rLED.substring(7, 10).toInt()));
@@ -194,16 +192,16 @@ void blink()
 void loop()
 {
   getHttp();
-  for (int i = 0; i < 10; i++ ) 
+  for (int i=0;i<10;i++) 
   {
-  for (int ii = 0; ii < kBlinkRepeats; ii++ ) { blink(); }
+    for (int ii=0;ii<kBlinkRepeats;ii++){blink();}
     delay(500*kBlinkDelayMultiplicator);
   };
-  kLoopCount++; if (kLoopCount <= 10) { kLoopCount = 0; }
-  if ((WiFi.status() != WL_CONNECTED) && ((millis()-kPreviousTime) >= kReconnectDelay)) 
+  kLoopCount++; if(kLoopCount<=10){kLoopCount=0;}
+  if ((WiFi.status() != WL_CONNECTED)&&((millis()-kPreviousTime)>=kReconnectDelay)) 
   {
     Serial.print(millis()); Serial.println('Reconnecting to WIFI network');
     WiFi.disconnect(); WiFi.reconnect();
-    kPreviousTime = millis();
+    kPreviousTime=millis();
   };
 }
