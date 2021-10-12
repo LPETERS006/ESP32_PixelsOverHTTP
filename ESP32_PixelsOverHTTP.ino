@@ -10,7 +10,6 @@
 #include <FastLED.h>
 #include <LinkedList.h>
 
-
 #define NUM_LEDS 1170
 #define DATA_PIN 23
 CRGB leds[NUM_LEDS];
@@ -45,6 +44,28 @@ void initWiFi()
   WiFi.mode(WIFI_STA); WiFi.begin(kSsid, kPassword);
   while (WiFi.status() != WL_CONNECTED) { delay(500); Serial.print('.'); }
   Serial.println(WiFi.localIP());
+}
+
+/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  ++ NTP TimeSync ...
+  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+void setClock() {
+  configTime(0, 0, "pool.ntp.org", "time.nist.gov");
+
+  Serial.print(F("Waiting for NTP time sync: "));
+  time_t nowSecs = time(nullptr);
+  while (nowSecs < 8 * 3600 * 2) {
+    delay(500);
+    Serial.print(F("."));
+    yield();
+    nowSecs = time(nullptr);
+  }
+
+  Serial.println();
+  struct tm timeinfo;
+  gmtime_r(&nowSecs, &timeinfo);
+  Serial.print(F("Current time: "));
+  Serial.print(asctime(&timeinfo));
 }
 
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -86,6 +107,9 @@ void response2LED(String rData)
   FastLED.show();
 }
 
+/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  ++ Get Device MAC ...
+  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 void getDeviceMAC()
 {
   kDeviceMac = WiFi.macAddress();
@@ -101,6 +125,7 @@ void setup()
   Serial.begin(115200); delay(10); Serial.println(); Serial.println();
   getDeviceMAC();
   initWiFi();
+  setClock();
   LEDS.addLeds<WS2812, DATA_PIN, GRB>(leds, NUM_LEDS);
   LEDS.clear(); LEDS.setBrightness(10); LEDS.show();
 }
@@ -113,7 +138,8 @@ void getHttp()
   int err = 0;
   http.beginRequest();
   err = http.get(kPath + kDeviceMac + "/");
-  http.sendHeader("Content-Type","application/json;");
+  http.sendHeader("Content-Type","application/json");
+  http.sendHeader("Accept","application/json");
   http.endRequest();
   if (err == 0)
   {
