@@ -1,6 +1,9 @@
 # ESP32_PixelsOverHTTP
 Update Neopixels over HTTP (GET)
 
+## Arduino Ide: add additional board Urls : 
+  https://dl.espressif.com/dl/package_esp32_index.json, 
+  http://arduino.esp8266.com/stable/package_esp8266com_index.json
 
 ## Dependencies
 - Requires library's installed over "Library Manager" :
