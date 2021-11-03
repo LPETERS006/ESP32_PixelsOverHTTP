@@ -12,3 +12,7 @@ Update Neopixels over HTTP (GET)
 
 - Requires library installed as descripted here https://github.com/ivanseidel/LinkedList#installation
   - [LinkedList] (https://github.com/ivanseidel/LinkedList)
+
+- For MATRIX use (...soon)
+  - [FastLED NeoMatrix] (https://github.com/marcmerlin/FastLED_NeoMatrix)
+  - [FastLED-GFX] (https://github.com/Jorgen-VikingGod/FastLED-GFX)
