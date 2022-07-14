@@ -11,7 +11,11 @@
 #include <FastLED.h>
 #include <LinkedList.h>
 
-#define NUM_LEDS 1170
+const uint8_t kMatrixWidth  = 30;
+const uint8_t kMatrixHeight = 20;
+bool kMatrixSerpentineLayout = true;
+#define NUM_LEDS (kMatrixWidth * kMatrixHeight)
+#define MAX_DIMENSION ((kMatrixWidth>kMatrixHeight) ? kMatrixWidth : kMatrixHeight)
 #define DATA_PIN 23
 CRGB leds[NUM_LEDS];
 
@@ -96,13 +100,13 @@ void response2LED(String rData)
   {
     String rLED = getValues(rData, ',' , i);
   Serial.println(rLED);
-    if (leds[i] == CRGB( rLED.substring(1, 4).toInt(), rLED.substring(4, 7).toInt(), rLED.substring(7, 10).toInt())) {}
+    if (leds[convert(i)] == CRGB( rLED.substring(1, 4).toInt(), rLED.substring(4, 7).toInt(), rLED.substring(7, 10).toInt())) {}
     else 
   {
       Serial.println('.');
       kLinkedListIndex.add(i); kLinkedListOld.add(leds[i]);
       kLinkedListNew.add(CRGB( rLED.substring(1, 4).toInt(), rLED.substring(4, 7).toInt(), rLED.substring(7, 10).toInt()));
-      leds[i] = CRGB( rLED.substring(1, 4).toInt(), rLED.substring(4, 7).toInt(), rLED.substring(7, 10).toInt());
+      leds[convert(i)] = CRGB( rLED.substring(1, 4).toInt(), rLED.substring(4, 7).toInt(), rLED.substring(7, 10).toInt());
     }
   };
   FastLED.show();
@@ -179,14 +183,44 @@ void blink()
   Serial.println('blink'); Serial.println( 'index size' + String(kLinkedListIndex.size()));
   for (int i = 0; i < kLinkedListIndex.size(); i++)
   {
-    int l = kLinkedListIndex.get(i); Serial.println(String(i)); leds[l] = kLinkedListOld.get(i);
+    int l = kLinkedListIndex.get(i); Serial.println(String(i)); leds[convert(l)] = kLinkedListOld.get(i);
   };
   LEDS.show(); delay(100*kBlinkDelayMultiplicator);
   for (int i = 0; i < kLinkedListIndex.size(); i++) 
   {
-    int l = kLinkedListIndex.get(i); Serial.println(String(i)); leds[l] = kLinkedListNew.get(i);
+    int l = kLinkedListIndex.get(i); Serial.println(String(i)); leds[convert(l)] = kLinkedListNew.get(i);
   };
   LEDS.show(); delay(500*kBlinkDelayMultiplicator);
+}
+
+/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  ++ Convert 2 Matrix XY.....
+  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+uint16_t convert(int i)
+{
+    uint8_t nr = i + 1;
+    uint8_t x = floor(nr/kMatrixWidth);
+    uint8_t y = nr % kMatrixWidth;
+    return (XY(x,y))
+}
+
+/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  ++ Matrix LEDs.....
+  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+uint16_t XY( uint8_t x, uint8_t y)
+{
+  if (kMatrixSerpentineLayout == true) {
+    if ( y & 0x01) {
+      uint8_t reverseX = (kMatrixWidth - 1) - x;
+      return (y * kMatrixWidth) + reverseX;
+    }
+    else {
+      return (y * kMatrixWidth) + x;
+    }
+  }
+  if (kMatrixSerpentineLayout == false) {
+    return (y * kMatrixWidth) + x;
+  }
 }
 
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
