@@ -1,6 +1,6 @@
 #define ESP32
 #define FASTLED_ALLOW_INTERRUPTS 0
-#define FASTLED_USE_PROGMEM 1
+#define FASTLED_USE_PROGMEM 0
 #define INTERRUPT_THRESHOLD 1
 #define FASTLED_INTERRUPT_RETRY_COUNT 1
 
@@ -201,7 +201,7 @@ uint16_t convert(int i)
     uint8_t nr = i + 1;
     uint8_t x = floor(nr/kMatrixWidth);
     uint8_t y = nr % kMatrixWidth;
-    return (XY(x,y))
+    return (XY(x,y));
 }
 
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
